@@ -1,0 +1,40 @@
+install.packages("pROC")
+library(pROC)
+
+heart$target <- ifelse(heart$num > 0, 1, 0)
+heart$target <- as.factor(heart$target)
+heart <- na.omit(heart)
+model <- glm(target ~ age + sex + chol + trestbps + thalch,
+             data = heart,
+             family = binomial)
+
+prob <- predict(model, type = "response")
+
+length(prob)
+length(heart$target)
+roc_curve <- roc(heart$target, prob)
+plot(roc_curve)
+
+library(ggplot2)
+
+heart$prob <- predict(model, type="response")
+
+ggplot(heart, aes(x=prob, fill=target)) +
+  geom_histogram(bins=30, alpha=0.6, position="identity") +
+  theme_minimal()
+
+#confusion matrix
+heart$pred <- ifelse(heart$prob > 0.5, 1, 0)
+table(Predicted = heart$pred, Actual = heart$target)
+
+cm <- table(Predicted = heart$pred, Actual = heart$target)
+cm
+cm_df <- as.data.frame(cm)
+
+ggplot(cm_df, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile() +
+  geom_text(aes(label = Freq), color = "white", size = 6) +
+  labs(title = "Confusion Matrix Heatmap",
+       x = "Actual",
+       y = "Predicted") +
+  theme_minimal()
